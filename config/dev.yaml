@@ -1,0 +1,3 @@
+database:
+  uri: "mongodb://deodeok:wjstjf@localhost:27017"
+  name: "deodeok"
