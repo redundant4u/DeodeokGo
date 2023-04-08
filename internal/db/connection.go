@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/spf13/viper"
@@ -11,18 +10,52 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-func InitMongoDBClient(ctx context.Context, cfg *viper.Viper) *mongo.Client {
-	url := cfg.GetString("database.uri")
+type MongoDatabase interface {
+	Collection(name string, opts ...*options.CollectionOptions) *mongo.Collection
+}
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(url))
+type MongoClient interface {
+	Database() MongoDatabase
+	Ping() error
+	Disconnect() error
+}
+
+type mongoClient struct {
+	client   *mongo.Client
+	database *mongo.Database
+}
+
+func NewMongoClient(ctx context.Context, cfg *viper.Viper) (MongoClient, error) {
+	clientOptions := options.Client().ApplyURI(cfg.GetString("database.uri"))
+	client, err := mongo.Connect(ctx, clientOptions)
 
 	if err != nil {
-		log.Fatal(fmt.Errorf("Could not connect to database: %w", err))
+		return nil, err
 	}
 
-	if err = client.Ping(ctx, readpref.Primary()); err != nil {
-		log.Fatal(fmt.Errorf("Cloud not ping database: %w", err))
+	return &mongoClient{
+		client:   client,
+		database: client.Database(cfg.GetString("database.name")),
+	}, nil
+}
+
+func (m *mongoClient) Database() MongoDatabase {
+	return m.database
+}
+
+func (m *mongoClient) Ping() error {
+	if err := m.client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		log.Fatal("unable to connect to DB: ", err)
+		return err
+	}
+	return nil
+}
+
+func (m *mongoClient) Disconnect() error {
+	if err := m.client.Disconnect(context.Background()); err != nil {
+		log.Fatal("unable to disconnect from DB: ", err)
+		return err
 	}
 
-	return client
+	return nil
 }

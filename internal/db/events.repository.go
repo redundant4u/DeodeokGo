@@ -18,15 +18,15 @@ type EventsRepository interface {
 	FindAllEvents(ctx context.Context) ([]models.Event, error)
 }
 
-type Collection struct {
+type EventsCollection struct {
 	collection *mongo.Collection
 }
 
-func NewEventsRepository(db *mongo.Database) EventsRepository {
-	return &Collection{collection: db.Collection("events")}
+func NewEventsRepository(db MongoDatabase) EventsRepository {
+	return &EventsCollection{collection: db.Collection("events")}
 }
 
-func (c *Collection) AddEvent(ctx context.Context, e models.Event) error {
+func (c *EventsCollection) AddEvent(ctx context.Context, e models.Event) error {
 	if e.ID.IsZero() {
 		e.ID = primitive.NewObjectID()
 	}
@@ -44,7 +44,7 @@ func (c *Collection) AddEvent(ctx context.Context, e models.Event) error {
 	return nil
 }
 
-func (c *Collection) FindEvent(ctx context.Context, id string) (models.Event, error) {
+func (c *EventsCollection) FindEvent(ctx context.Context, id string) (models.Event, error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 
 	fmt.Println(id, objectId)
@@ -69,7 +69,7 @@ func (c *Collection) FindEvent(ctx context.Context, id string) (models.Event, er
 	return e, nil
 }
 
-func (c *Collection) FindEventByName(ctx context.Context, name string) (models.Event, error) {
+func (c *EventsCollection) FindEventByName(ctx context.Context, name string) (models.Event, error) {
 	filter := bson.M{"name": name}
 
 	result := c.collection.FindOne(ctx, filter)
@@ -86,7 +86,7 @@ func (c *Collection) FindEventByName(ctx context.Context, name string) (models.E
 	return e, nil
 }
 
-func (c *Collection) FindAllEvents(ctx context.Context) ([]models.Event, error) {
+func (c *EventsCollection) FindAllEvents(ctx context.Context) ([]models.Event, error) {
 	filter := bson.M{}
 	options := options.Find()
 

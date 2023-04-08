@@ -13,7 +13,7 @@ func main() {
 	env := "dev"
 	cfg := config.LoadConfig(env)
 
-	client := db.InitMongoDBClient(ctx, cfg)
+	c, _ := db.NewMongoClient(ctx, cfg)
 
-	server.Init(client)
+	server.Init(c)
 }

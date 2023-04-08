@@ -1,20 +1,28 @@
 package server
 
 import (
+	"sync"
+
 	"github.com/gin-gonic/gin"
-	"github.com/redundant4u/DeoDeokGo/internal/config"
 	"github.com/redundant4u/DeoDeokGo/internal/controllers"
 	"github.com/redundant4u/DeoDeokGo/internal/db"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func Init(client *mongo.Client) {
-	config := config.GetConfig()
-	router := gin.Default()
+var runOnce sync.Once
 
-	databaseName := config.GetString("database.name")
+func Init(c db.MongoClient) {
+	runOnce.Do(func() {
+		router := Router(c)
+		router.Run(":8888")
+	})
+}
 
-	eventsRepository := db.NewEventsRepository(client.Database(databaseName))
+func Router(c db.MongoClient) (router *gin.Engine) {
+	router = gin.Default()
+
+	database := c.Database()
+
+	eventsRepository := db.NewEventsRepository(database)
 	eventsController := controllers.NewEventsController(eventsRepository)
 
 	eventsGroup := router.Group("events")
@@ -24,5 +32,5 @@ func Init(client *mongo.Client) {
 	eventsGroup.GET("/name/:name", eventsController.FindEventByName)
 	eventsGroup.POST("", eventsController.NewEvent)
 
-	router.Run(":8888")
+	return router
 }
