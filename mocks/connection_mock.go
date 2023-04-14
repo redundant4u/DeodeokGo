@@ -1,27 +1,32 @@
 package mocks
 
 import (
-	"github.com/redundant4u/DeoDeokGo/internal/db"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"context"
+
+	"github.com/redundant4u/DeoDeokGo/internal/models"
+	"github.com/redundant4u/DeoDeokGo/internal/queue"
 )
 
-type MockMongoClient struct{}
+type MockEventEmitter struct{}
 
-type MockMongoDataBase struct{}
+type MockEventsRepository struct{}
 
-func (c *MockMongoClient) Database() db.MongoDatabase {
-	return &MockMongoDataBase{}
+func (r *MockEventsRepository) Add(ctx context.Context, e models.Event) ([]byte, error) {
+	return nil, nil
 }
 
-func (c *MockMongoClient) Ping() error {
-	return nil
+func (r *MockEventsRepository) Find(ctx context.Context, id string) (models.Event, error) {
+	return models.Event{}, nil
 }
 
-func (c *MockMongoClient) Disconnect() error {
-	return nil
+func (r *MockEventsRepository) FindByName(ctx context.Context, name string) (models.Event, error) {
+	return models.Event{}, nil
 }
 
-func (db *MockMongoDataBase) Collection(name string, opts ...*options.CollectionOptions) *mongo.Collection {
+func (r *MockEventsRepository) FindAll(ctx context.Context) ([]models.Event, error) {
+	return []models.Event{}, nil
+}
+
+func (e *MockEventEmitter) Emit(event queue.Event) error {
 	return nil
 }

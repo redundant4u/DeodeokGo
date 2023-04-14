@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	"fmt"
+	"log"
 
 	"github.com/redundant4u/DeoDeokGo/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,10 +12,10 @@ import (
 )
 
 type EventsRepository interface {
-	AddEvent(ctx context.Context, e models.Event) error
-	FindEvent(ctx context.Context, id string) (models.Event, error)
-	FindEventByName(ctx context.Context, name string) (models.Event, error)
-	FindAllEvents(ctx context.Context) ([]models.Event, error)
+	Add(ctx context.Context, e models.Event) ([]byte, error)
+	Find(ctx context.Context, id string) (models.Event, error)
+	FindByName(ctx context.Context, name string) (models.Event, error)
+	FindAll(ctx context.Context) ([]models.Event, error)
 }
 
 type EventsCollection struct {
@@ -26,7 +26,7 @@ func NewEventsRepository(db MongoDatabase) EventsRepository {
 	return &EventsCollection{collection: db.Collection("events")}
 }
 
-func (c *EventsCollection) AddEvent(ctx context.Context, e models.Event) error {
+func (c *EventsCollection) Add(ctx context.Context, e models.Event) ([]byte, error) {
 	if e.ID.IsZero() {
 		e.ID = primitive.NewObjectID()
 	}
@@ -38,16 +38,15 @@ func (c *EventsCollection) AddEvent(ctx context.Context, e models.Event) error {
 	_, err := c.collection.InsertOne(ctx, e)
 
 	if err != nil {
-		return err
+		log.Fatal(err)
+		return nil, err
 	}
 
-	return nil
+	return []byte(e.ID.Hex()), nil
 }
 
-func (c *EventsCollection) FindEvent(ctx context.Context, id string) (models.Event, error) {
+func (c *EventsCollection) Find(ctx context.Context, id string) (models.Event, error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
-
-	fmt.Println(id, objectId)
 
 	if err != nil {
 		return models.Event{}, err
@@ -69,7 +68,7 @@ func (c *EventsCollection) FindEvent(ctx context.Context, id string) (models.Eve
 	return e, nil
 }
 
-func (c *EventsCollection) FindEventByName(ctx context.Context, name string) (models.Event, error) {
+func (c *EventsCollection) FindByName(ctx context.Context, name string) (models.Event, error) {
 	filter := bson.M{"name": name}
 
 	result := c.collection.FindOne(ctx, filter)
@@ -86,7 +85,7 @@ func (c *EventsCollection) FindEventByName(ctx context.Context, name string) (mo
 	return e, nil
 }
 
-func (c *EventsCollection) FindAllEvents(ctx context.Context) ([]models.Event, error) {
+func (c *EventsCollection) FindAll(ctx context.Context) ([]models.Event, error) {
 	filter := bson.M{}
 	options := options.Find()
 

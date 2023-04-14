@@ -10,7 +10,7 @@ import (
 )
 
 func TestRouter(t *testing.T) {
-	r := server.Router(&mocks.MockMongoClient{})
+	r := server.Router(&mocks.MockEventsRepository{}, &mocks.MockEventEmitter{})
 	list := r.Routes()
 
 	assertRoutePresent(t, list, gin.RouteInfo{

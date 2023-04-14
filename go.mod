@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/gin-gonic/gin v1.9.0
+	github.com/rabbitmq/amqp091-go v1.8.0
 	github.com/spf13/viper v1.15.0
 	go.mongodb.org/mongo-driver v1.11.4
 )

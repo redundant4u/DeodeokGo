@@ -6,24 +6,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/redundant4u/DeoDeokGo/internal/controllers"
 	"github.com/redundant4u/DeoDeokGo/internal/db"
+	"github.com/redundant4u/DeoDeokGo/internal/queue"
 )
 
 var runOnce sync.Once
 
-func Init(c db.MongoClient) {
+func Init(eventsRepository db.EventsRepository, emitter queue.EventEmitter) {
 	runOnce.Do(func() {
-		router := Router(c)
+		router := Router(eventsRepository, emitter)
 		router.Run(":8888")
 	})
 }
 
-func Router(c db.MongoClient) (router *gin.Engine) {
+func Router(eventsRepository db.EventsRepository, emitter queue.EventEmitter) (router *gin.Engine) {
 	router = gin.Default()
 
-	database := c.Database()
-
-	eventsRepository := db.NewEventsRepository(database)
-	eventsController := controllers.NewEventsController(eventsRepository)
+	eventsController := controllers.NewEventsController(eventsRepository, emitter)
 
 	eventsGroup := router.Group("events")
 
