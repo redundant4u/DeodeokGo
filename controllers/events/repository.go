@@ -1,32 +1,36 @@
-package db
+package events
 
 import (
 	"context"
-	"log"
 
-	"github.com/redundant4u/DeoDeokGo/internal/models"
+	"github.com/redundant4u/DeoDeokGo/db"
+	"github.com/redundant4u/DeoDeokGo/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type EventsRepository interface {
-	Add(ctx context.Context, e models.Event) ([]byte, error)
-	Find(ctx context.Context, id string) (models.Event, error)
-	FindByName(ctx context.Context, name string) (models.Event, error)
-	FindAll(ctx context.Context) ([]models.Event, error)
+type Repository interface {
+	Add(e models.Event) ([]byte, error)
+	Find(id string) (models.Event, error)
+	FindByName(name string) (models.Event, error)
+	FindAll() ([]models.Event, error)
 }
 
-type EventsCollection struct {
+type repository struct {
+	ctx        context.Context
 	collection *mongo.Collection
 }
 
-func NewEventsRepository(db MongoDatabase) EventsRepository {
-	return &EventsCollection{collection: db.Collection("events")}
+func NewRepository(ctx context.Context, db db.MongoDatabase) Repository {
+	return &repository{
+		ctx:        ctx,
+		collection: db.Collection("events"),
+	}
 }
 
-func (c *EventsCollection) Add(ctx context.Context, e models.Event) ([]byte, error) {
+func (r *repository) Add(e models.Event) ([]byte, error) {
 	if e.ID.IsZero() {
 		e.ID = primitive.NewObjectID()
 	}
@@ -35,17 +39,16 @@ func (c *EventsCollection) Add(ctx context.Context, e models.Event) ([]byte, err
 		e.Location.ID = primitive.NewObjectID()
 	}
 
-	_, err := c.collection.InsertOne(ctx, e)
+	_, err := r.collection.InsertOne(r.ctx, e)
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
 	return []byte(e.ID.Hex()), nil
 }
 
-func (c *EventsCollection) Find(ctx context.Context, id string) (models.Event, error) {
+func (r *repository) Find(id string) (models.Event, error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
@@ -54,13 +57,14 @@ func (c *EventsCollection) Find(ctx context.Context, id string) (models.Event, e
 
 	filter := bson.M{"_id": objectId}
 
-	result := c.collection.FindOne(ctx, filter)
+	result := r.collection.FindOne(r.ctx, filter)
 
 	if err := result.Err(); err != nil {
 		return models.Event{}, err
 	}
 
 	var e models.Event
+
 	if err := result.Decode(&e); err != nil {
 		return models.Event{}, nil
 	}
@@ -68,10 +72,10 @@ func (c *EventsCollection) Find(ctx context.Context, id string) (models.Event, e
 	return e, nil
 }
 
-func (c *EventsCollection) FindByName(ctx context.Context, name string) (models.Event, error) {
+func (r *repository) FindByName(name string) (models.Event, error) {
 	filter := bson.M{"name": name}
 
-	result := c.collection.FindOne(ctx, filter)
+	result := r.collection.FindOne(r.ctx, filter)
 
 	if err := result.Err(); err != nil {
 		return models.Event{}, err
@@ -85,18 +89,18 @@ func (c *EventsCollection) FindByName(ctx context.Context, name string) (models.
 	return e, nil
 }
 
-func (c *EventsCollection) FindAll(ctx context.Context) ([]models.Event, error) {
+func (r *repository) FindAll() ([]models.Event, error) {
 	filter := bson.M{}
 	options := options.Find()
 
-	result, err := c.collection.Find(ctx, filter, options)
+	result, err := r.collection.Find(r.ctx, filter, options)
 
 	if err != nil {
 		return []models.Event{}, err
 	}
 
 	var e []models.Event
-	if err := result.All(ctx, &e); err != nil {
+	if err := result.All(r.ctx, &e); err != nil {
 		return []models.Event{}, err
 	}
 

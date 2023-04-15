@@ -24,3 +24,5 @@ api.http
 
 .vscode
 .DS_Store
+
+tmp

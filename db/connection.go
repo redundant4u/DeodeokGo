@@ -2,12 +2,11 @@ package db
 
 import (
 	"context"
-	"log"
+	"time"
 
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type MongoDatabase interface {
@@ -16,8 +15,6 @@ type MongoDatabase interface {
 
 type MongoClient interface {
 	Database() MongoDatabase
-	Ping() error
-	Disconnect() error
 }
 
 type mongoClient struct {
@@ -25,10 +22,17 @@ type mongoClient struct {
 	database *mongo.Database
 }
 
-func NewMongoClient(ctx context.Context, cfg *viper.Viper) (MongoClient, error) {
+func NewMongoClient(cfg *viper.Viper) (MongoClient, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	clientOptions := options.Client().ApplyURI(cfg.GetString("database.uri"))
 	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		return nil, err
+	}
 
+	err = client.Ping(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -41,21 +45,4 @@ func NewMongoClient(ctx context.Context, cfg *viper.Viper) (MongoClient, error) 
 
 func (m *mongoClient) Database() MongoDatabase {
 	return m.database
-}
-
-func (m *mongoClient) Ping() error {
-	if err := m.client.Ping(context.TODO(), readpref.Primary()); err != nil {
-		log.Fatal("unable to connect to DB: ", err)
-		return err
-	}
-	return nil
-}
-
-func (m *mongoClient) Disconnect() error {
-	if err := m.client.Disconnect(context.Background()); err != nil {
-		log.Fatal("unable to disconnect from DB: ", err)
-		return err
-	}
-
-	return nil
 }

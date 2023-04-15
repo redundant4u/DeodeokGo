@@ -1,4 +1,4 @@
-package queue
+package amqp
 
 import (
 	"encoding/json"
@@ -6,19 +6,16 @@ import (
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/redundant4u/DeoDeokGo/internal/queue/contracts"
+	"github.com/redundant4u/DeoDeokGo/queue"
+	"github.com/redundant4u/DeoDeokGo/queue/contracts"
 )
-
-type EventListener interface {
-	Listen(eventNames ...string) (<-chan Event, <-chan error, error)
-}
 
 type amqpEventListener struct {
 	connection *amqp.Connection
 	queue      string
 }
 
-func NewEventListener(conn *amqp.Connection, queue string) (EventListener, error) {
+func NewEventListener(conn *amqp.Connection, queue string) queue.EventListener {
 	listener := &amqpEventListener{
 		connection: conn,
 		queue:      queue,
@@ -26,13 +23,13 @@ func NewEventListener(conn *amqp.Connection, queue string) (EventListener, error
 
 	err := listener.setup()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	return listener, nil
+	return listener
 }
 
-func (a *amqpEventListener) Listen(eventNames ...string) (<-chan Event, <-chan error, error) {
+func (a *amqpEventListener) Listen(eventNames ...string) (<-chan queue.Event, <-chan error, error) {
 	ch, err := a.connection.Channel()
 	if err != nil {
 		return nil, nil, err
@@ -54,7 +51,7 @@ func (a *amqpEventListener) Listen(eventNames ...string) (<-chan Event, <-chan e
 		return nil, nil, err
 	}
 
-	events := make(chan Event)
+	events := make(chan queue.Event)
 	errors := make(chan error)
 
 	go func() {
@@ -73,7 +70,7 @@ func (a *amqpEventListener) Listen(eventNames ...string) (<-chan Event, <-chan e
 				continue
 			}
 
-			var event Event
+			var event queue.Event
 
 			fmt.Println(eventName)
 

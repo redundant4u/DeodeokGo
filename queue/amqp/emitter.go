@@ -1,4 +1,4 @@
-package queue
+package amqp
 
 import (
 	"context"
@@ -6,18 +6,15 @@ import (
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/redundant4u/DeoDeokGo/queue"
 )
-
-type EventEmitter interface {
-	Emit(e Event) error
-}
 
 type amqpEventEmitter struct {
 	context    context.Context
 	connection *amqp.Connection
 }
 
-func NewEventEmitter(ctx context.Context, conn *amqp.Connection, exchange string) EventEmitter {
+func NewEventEmitter(ctx context.Context, conn *amqp.Connection, exchange string) queue.EventEmitter {
 	emitter := &amqpEventEmitter{
 		context:    ctx,
 		connection: conn,
@@ -31,7 +28,7 @@ func NewEventEmitter(ctx context.Context, conn *amqp.Connection, exchange string
 	return emitter
 }
 
-func (a *amqpEventEmitter) Emit(e Event) error {
+func (a *amqpEventEmitter) Emit(e queue.Event) error {
 	json, err := json.Marshal(e)
 	if err != nil {
 		log.Fatal(err)

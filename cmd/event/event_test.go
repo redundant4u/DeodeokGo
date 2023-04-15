@@ -1,16 +1,19 @@
-package server_test
+package main_test
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redundant4u/DeoDeokGo/internal/server"
 	"github.com/redundant4u/DeoDeokGo/mocks"
+	"github.com/redundant4u/DeoDeokGo/routes"
 )
 
 func TestRouter(t *testing.T) {
-	r := server.Router(&mocks.MockEventsRepository{}, &mocks.MockEventEmitter{})
+	ctx := context.Background()
+
+	r := routes.InitEventsRoutes(ctx, &mocks.MockMongoDatabase{}, &mocks.MockEventListener{}, &mocks.MockEventEmitter{})
 	list := r.Routes()
 
 	assertRoutePresent(t, list, gin.RouteInfo{

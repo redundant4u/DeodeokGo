@@ -1,5 +1,9 @@
 database:
   uri: "mongodb://deodeok:wjstjf@localhost:27017"
   name: "deodeok"
-amqp:
-  uri: "amqp://guest:guest@localhost:5672"
+broker:
+  type: "amqp"
+  amqp:
+    uri: "amqp://guest:guest@localhost:5672"
+  kafka:
+    uri: "localhost:9092"
