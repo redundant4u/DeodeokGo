@@ -43,8 +43,6 @@ func (a *amqpEventListener) Listen(eventNames ...string) (<-chan queue.Event, <-
 		}
 	}
 
-	fmt.Println("queue", a.queue)
-
 	msgs, err := ch.Consume(a.queue, "", true, false, false, false, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -72,11 +70,10 @@ func (a *amqpEventListener) Listen(eventNames ...string) (<-chan queue.Event, <-
 
 			var event queue.Event
 
-			fmt.Println(eventName)
+			log.Default().Println(eventName)
 
 			switch eventName {
 			case "eventCreated":
-				fmt.Println("asdasdsadasdas")
 				event = new(contracts.EventCreatedEvent)
 			default:
 				errors <- fmt.Errorf("Event type %s is unknown", eventName)

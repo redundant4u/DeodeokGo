@@ -11,7 +11,7 @@ func LoadConfig(env string) (*viper.Viper, error) {
 
 	config.SetConfigName(env)
 	config.SetConfigType("yaml")
-	config.AddConfigPath("../../config/")
+	config.AddConfigPath("config/")
 
 	err := config.ReadInConfig()
 

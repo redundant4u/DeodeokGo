@@ -6,6 +6,9 @@ services:
     image: mongo:4.4
     ports:
       - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=deodeok
+      - MONGO_INITDB_ROOT_PASSWORD=wjstjf
 
   amqp:
     container_name: amqp

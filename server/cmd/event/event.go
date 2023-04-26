@@ -16,19 +16,19 @@ func main() {
 	ctx := context.Background()
 	cfg, err := config.LoadConfig("dev")
 	if err != nil {
-		log.Fatal("Cloud not load config", err)
+		log.Fatal("Colud not load config: ", err)
 	}
 
 	// DB
 	mongoClient, err := db.NewMongoClient(cfg)
 	if err != nil {
-		log.Fatal("Colud not connect DB", err)
+		log.Fatal("Colud not connect DB: ", err)
 	}
 
 	// Message Broker
 	amqpConn, err := amqp.NewAmqpConnection(cfg)
 	if err != nil {
-		log.Fatal("Could not establish AMQP connection", err)
+		log.Fatal("Could not establish AMQP connection: ", err)
 	}
 	defer amqpConn.Close()
 

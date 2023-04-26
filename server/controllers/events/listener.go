@@ -22,8 +22,6 @@ func (p *Processor) ProcessEvents() {
 		panic(err)
 	}
 
-	// var forever chan struct{}
-
 	for {
 		select {
 		case evt := <-received:
@@ -32,7 +30,7 @@ func (p *Processor) ProcessEvents() {
 			log.Printf("received error while processing msg: %s", err)
 		}
 	}
-	// <-forever
+
 }
 
 func (p *Processor) handleEvent(event queue.Event) {
@@ -41,9 +39,9 @@ func (p *Processor) handleEvent(event queue.Event) {
 		log.Printf("event %s created %s", e.ID, e)
 
 		objectID, _ := primitive.ObjectIDFromHex(e.ID)
-		_, err := p.Service.Add(models.Event{ID: objectID})
+		_, err := p.Service.Add(models.Event{ID: objectID, Name: e.Name})
 		if err != nil {
-			log.Fatal("Event")
+			log.Fatal("Add Event Error")
 		}
 	}
 }
