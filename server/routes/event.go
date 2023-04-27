@@ -9,18 +9,12 @@ import (
 	"github.com/redundant4u/DeoDeokGo/queue"
 )
 
-func InitEventsRoutes(ctx context.Context, db db.MongoDatabase, listener queue.EventListener, emitter queue.EventEmitter) *gin.Engine {
+func InitEventsRoutes(ctx context.Context, db db.MongoDatabase, emitter queue.EventEmitter) *gin.Engine {
 	r := gin.Default()
 
 	eventsRepository := events.NewRepository(ctx, db)
 	eventsService := events.NewService(eventsRepository, emitter)
 	eventsController := events.NewController(eventsService)
-
-	processor := events.Processor{
-		Service:  eventsService,
-		Listener: listener,
-	}
-	go processor.ProcessEvents()
 
 	eventsGroup := r.Group("events")
 

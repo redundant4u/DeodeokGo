@@ -12,12 +12,14 @@ import (
 
 type amqpEventListener struct {
 	connection *amqp.Connection
+	exchange   string
 	queue      string
 }
 
-func NewEventListener(conn *amqp.Connection, queue string) queue.EventListener {
+func NewEventListener(conn *amqp.Connection, exchange string, queue string) queue.EventListener {
 	listener := &amqpEventListener{
 		connection: conn,
+		exchange:   exchange,
 		queue:      queue,
 	}
 
@@ -38,7 +40,7 @@ func (a *amqpEventListener) Listen(eventNames ...string) (<-chan queue.Event, <-
 	defer ch.Close()
 
 	for _, eventName := range eventNames {
-		if err := ch.QueueBind(a.queue, eventName, "events", false, nil); err != nil {
+		if err := ch.QueueBind(a.queue, eventName, a.exchange, false, nil); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -57,20 +59,16 @@ func (a *amqpEventListener) Listen(eventNames ...string) (<-chan queue.Event, <-
 			rawEventName, ok := msg.Headers["x-event-name"]
 			if !ok {
 				errors <- fmt.Errorf("Msg did not contain x-event-name header")
-				_ = msg.Nack(false, false)
 				continue
 			}
 
 			eventName, ok := rawEventName.(string)
 			if !ok {
 				errors <- fmt.Errorf("x-event-name header is not string, but %t", rawEventName)
-				_ = msg.Nack(false, false)
 				continue
 			}
 
 			var event queue.Event
-
-			log.Default().Println(eventName)
 
 			switch eventName {
 			case "eventCreated":
@@ -88,7 +86,6 @@ func (a *amqpEventListener) Listen(eventNames ...string) (<-chan queue.Event, <-
 
 			events <- event
 		}
-
 	}()
 
 	return events, errors, nil
@@ -102,7 +99,7 @@ func (a *amqpEventListener) setup() error {
 
 	defer ch.Close()
 
-	err = ch.ExchangeDeclare("events", "topic", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(a.exchange, "topic", true, false, false, false, nil)
 	if err != nil {
 		return err
 	}

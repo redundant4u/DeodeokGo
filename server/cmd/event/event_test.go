@@ -13,7 +13,7 @@ import (
 func TestRouter(t *testing.T) {
 	ctx := context.Background()
 
-	r := routes.InitEventsRoutes(ctx, &mocks.MockMongoDatabase{}, &mocks.MockEventListener{}, &mocks.MockEventEmitter{})
+	r := routes.InitEventsRoutes(ctx, &mocks.MockMongoDatabase{}, &mocks.MockEventEmitter{})
 	list := r.Routes()
 
 	assertRoutePresent(t, list, gin.RouteInfo{

@@ -51,6 +51,9 @@ func (s *service) Add(e models.Event) ([]byte, error) {
 	}
 
 	err = s.emitter.Emit(&msg)
+	if err != nil {
+		return nil, err
+	}
 
 	return id, err
 }

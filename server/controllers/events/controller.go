@@ -13,11 +13,9 @@ type eventsController struct {
 }
 
 func NewController(service Service) *eventsController {
-	c := &eventsController{
+	return &eventsController{
 		service: service,
 	}
-
-	return c
 }
 
 func (c *eventsController) NewEvent(ctx *gin.Context) {

@@ -1,8 +1,9 @@
-package events
+package booking
 
 import (
 	"log"
 
+	"github.com/redundant4u/DeoDeokGo/controllers/events"
 	"github.com/redundant4u/DeoDeokGo/models"
 	"github.com/redundant4u/DeoDeokGo/queue"
 	"github.com/redundant4u/DeoDeokGo/queue/contracts"
@@ -10,13 +11,11 @@ import (
 )
 
 type Processor struct {
-	Service  Service
-	Listener queue.EventListener
+	EventsRepository events.Repository
+	Listener         queue.EventListener
 }
 
 func (p *Processor) ProcessEvents() {
-	log.Println("Listening to events")
-
 	received, errors, err := p.Listener.Listen("eventCreated")
 	if err != nil {
 		panic(err)
@@ -24,8 +23,8 @@ func (p *Processor) ProcessEvents() {
 
 	for {
 		select {
-		case evt := <-received:
-			p.handleEvent(evt)
+		case event := <-received:
+			p.handleEvent(event)
 		case err = <-errors:
 			log.Printf("received error while processing msg: %s", err)
 		}
@@ -39,7 +38,7 @@ func (p *Processor) handleEvent(event queue.Event) {
 		log.Printf("event %s created %s", e.ID, e)
 
 		objectID, _ := primitive.ObjectIDFromHex(e.ID)
-		_, err := p.Service.Add(models.Event{ID: objectID, Name: e.Name})
+		_, err := p.EventsRepository.Add(models.Event{ID: objectID, Name: e.Name})
 		if err != nil {
 			log.Fatal("Add Event Error")
 		}

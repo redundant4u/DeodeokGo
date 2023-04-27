@@ -12,12 +12,14 @@ import (
 type amqpEventEmitter struct {
 	context    context.Context
 	connection *amqp.Connection
+	exchange   string
 }
 
 func NewEventEmitter(ctx context.Context, conn *amqp.Connection, exchange string) queue.EventEmitter {
 	emitter := &amqpEventEmitter{
 		context:    ctx,
 		connection: conn,
+		exchange:   exchange,
 	}
 
 	err := emitter.setup()
@@ -49,7 +51,7 @@ func (a *amqpEventEmitter) Emit(e queue.Event) error {
 		Body:        json,
 	}
 
-	err = ch.PublishWithContext(a.context, "events", e.EventName(), false, false, msg)
+	err = ch.PublishWithContext(a.context, a.exchange, e.EventName(), false, false, msg)
 
 	return err
 }
@@ -62,7 +64,7 @@ func (a *amqpEventEmitter) setup() error {
 
 	defer ch.Close()
 
-	err = ch.ExchangeDeclare("events", "topic", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(a.exchange, "topic", true, false, false, false, nil)
 	if err != nil {
 		return err
 	}

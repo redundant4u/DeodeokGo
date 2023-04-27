@@ -32,20 +32,23 @@ func main() {
 	}
 	defer amqpConn.Close()
 
+	var eventListener queue.EventListener
 	var eventEmitter queue.EventEmitter
 
 	switch cfg.GetString("broker.type") {
 	case "amqp":
+		eventListener = amqp.NewEventListener(amqpConn, "events", "booking")
 		eventEmitter = amqp.NewEventEmitter(ctx, amqpConn, "events")
 	case "kafka":
 		kafkaClient := kafka.NewKafkaClient(cfg)
 		eventEmitter = kafka.NewKafkaEventEmitter(kafkaClient)
+		eventListener = kafka.NewKafkaEventListener(kafkaClient, []int32{})
 	default:
 		panic("Bad broker type name")
 	}
 
 	// Router
-	r := routes.InitEventsRoutes(ctx, mongoClient.Database(), eventEmitter)
+	r := routes.InitBookingRoutes(ctx, mongoClient.Database(), eventListener, eventEmitter)
 
-	log.Fatal(r.Run())
+	log.Fatal(r.Run(":8081"))
 }
